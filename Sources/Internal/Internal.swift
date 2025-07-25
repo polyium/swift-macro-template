@@ -1,7 +1,12 @@
 import SwiftCompilerPlugin
+import SwiftDiagnostics
+import SwiftOperators
 import SwiftSyntax
 import SwiftSyntaxBuilder
+import SwiftSyntaxMacroExpansion
 import SwiftSyntaxMacros
+
+private typealias Exception = SwiftSyntaxMacros.MacroExpansionErrorMessage
 
 /// Implementation of the `stringify` macro, which takes an expression
 /// of any type and produces a tuple containing the value of that expression
@@ -25,9 +30,56 @@ public struct StringifyMacro: ExpressionMacro {
     }
 }
 
+public struct AddHelloWorldFunctionMacro: MemberMacro, PeerMacro, Sendable {
+    public static func expansion(
+        of node: AttributeSyntax,
+        providingMembersOf declaration: some DeclGroupSyntax,
+        conformingTo protocols: [TypeSyntax],
+        in context: some MacroExpansionContext
+    ) throws -> [DeclSyntax] {
+        guard let member = declaration.as(StructDeclSyntax.self) else {
+            context.diagnose(
+                Diagnostic(
+                    node: declaration,
+                    message: Exception(
+                        "'@HelloWorldFunction' can only be applied to struct types"
+                    )
+                )
+            )
+
+            return []
+        }
+
+        // Create a function declaration for: func hello() { print("Hello, world!") }
+        //        let helloFunc = try? FunctionDeclSyntax("func hello() { print(\"Hello, world!\") }")
+        //        return [DeclSyntax(helloFunc)]
+        return [
+            """
+            public static func hello() { print("Hello World") }
+            """
+        ]
+    }
+
+    public static func expansion(
+        of node: AttributeSyntax,
+        providingPeersOf declaration: some DeclSyntaxProtocol,
+        in context: some MacroExpansionContext
+    ) throws -> [DeclSyntax] {
+        // The peer macro expansion of this macro is only used to diagnose misuses
+        // on symbols that are not decl groups.
+
+        return []
+    }
+
+    public static var formatMode: FormatMode {
+        .disabled
+    }
+}
+
 @main
-struct NamespacePlugin: CompilerPlugin {
+struct Plugin: CompilerPlugin {
     let providingMacros: [Macro.Type] = [
         StringifyMacro.self,
+        AddHelloWorldFunctionMacro.self,
     ]
 }
