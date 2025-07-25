@@ -1,4 +1,11 @@
-# Swift Package + Executable Template
+# Swift Package Template
+
+> [!IMPORTANT]  
+> The following `README.md`'s content is a template and is not intended
+> to be treated as the package's source of information.
+>
+> Do not attempt to run or execute any scripts as a part
+> of Polyium's templated markdown.
 
 ## Usage
 
